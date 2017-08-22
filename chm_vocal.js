@@ -24,7 +24,8 @@ controller.on('rtm_close', function(bot, err) {
 });
 start_rtm();
 
-const vocal_map = new Map();
+const chinese_map = new Map();
+const english_map = new Map();
 
 try {
     const fs = require('fs');
@@ -32,20 +33,23 @@ try {
 
     files.forEach(function (file) {
         const json = JSON.parse(fs.readFileSync('src/' + file, 'utf8'));
-        vocal_map.set(json.word, json.reading);
+        chinese_map.set(json.word, json.reading);
+        const string_list = file.split(/[_|\.]/);
+        english_map.set(json.word, string_list[1]);
     });
 }
 catch (err) {
     console.error(err);
     process.exit(1);
 }
-const regexp_string = '(' + Array.from(vocal_map.keys()).join('|') + ')';
+const regexp_string = '(' + Array.from(chinese_map.keys()).join('|') + ')';
 const regexp = new RegExp(regexp_string, 'g');
 const target = 'direct_message,direct_mention,mention,ambient';
 
 controller.hears(regexp, target, function(bot, message) {
     message.match.forEach(function(matched){
-        bot.reply(message, '```' + matched + ':' + vocal_map.get(matched) + '```');
+        bot.reply(message, '```' + matched + '(' + english_map.get(matched) +
+                                       '):' + chinese_map.get(matched) + '```');
     });
 });
 
